@@ -1,5 +1,6 @@
 #pragma config(Sensor, in1,    analog1,        sensorAnalog)
 #pragma config(Sensor, dgtl1,  limitSwitch,    sensorTouch)
+#pragma config(Sensor, dgtl3,  ultraSensor,    sensorSONAR_inch)
 #pragma config(Sensor, dgtl10, digital10,      sensorDigitalOut)
 #pragma config(Sensor, dgtl11, digital11,      sensorDigitalOut)
 #pragma config(Sensor, dgtl12, digital12,      sensorDigitalOut)
@@ -129,6 +130,47 @@ void Move(){
 	motor[port10] = -tempSpeed; // left, port	 10
 }
 
+void moveMotors(int n)
+{
+	motor[rightMotor] = n;
+	motor[leftMotor] = n;
+}
+
+void stopMoving()
+{
+	motor[rightMotor] = 0;
+	motor[leftMotor]= 0;
+}
+
+void rightPointTurn(int n)
+{
+	motor[leftMotor] = n;
+	motor[rightMotor] = 0;
+}
+
+void leftPointTurn(int n)
+{
+	motor[leftMotor] = 0;
+	motor[rightMotor] = n;
+}
+
+void rightSwingTurn(int n)
+{
+	motor[leftMotor] = n;
+	motor[rightMotor] = -n;
+}
+
+void leftSwingTurn(int n)
+{
+	motor[leftMotor] = -n;
+	motor[rightMotor] = n;
+}
+
+void operateArm(int n)
+{
+	motor[armMotor] = n;
+}
+
 /*
 The GOBEACON main program essentially sets up all the configuration variables and repeatedly
 execute the three routines: Read_PD, find_max, and move.*/
@@ -146,18 +188,16 @@ task main(){
 
 	int state = 1;
 
-	while(true){
+	while(state == 1){
 		ReadPD();
 		Find_max();
 		Move();
 
-		int lmtSwitch = SensorValue[limitSwitch];
+		int lmtSwitch = SensorValue[limitSwitch];.
 
 		if (lmtSwitch == true){
-			motor[port1] = 0;
-			motor[port10] = 0;
-
-		state = 2;
+			stopMoving();
+			state = 2;
 		}
 
 	}
@@ -166,24 +206,33 @@ task main(){
 		//Turn off red button
 		ReadPD();
 
-		motor[port3] = 12.7;
+		operateArm(12.7);
 		wait1Msec(3000);
-		motor[port3] = -12.7;
+		operateArm(-12.7);
+		wait1Msec(3000);
+		operateArm(0);
 
-		if(PD_sum < 0){
-			//Back away from red beacon
-
+		if(PD_sum < 3000){
+			moveMotors(-127)
+			wait1Msec(1000);
+			stopMoving();
 			state = 3;
 		}
 	}
 
+		freq = 1;
+		SensorValue[digital10] = freq;// turn to 10KHz(green beacon)
+
 	while(state == 3){
 		//Go to green
 		ReadPD();
+		Find_max();
+		Move();
 
-		if(PD_sum < 0){
-			//e
+		int lmtSwitch = SensorValue[limitSwitch];.
 
+		if (lmtSwitch == true){
+			stopMoving();
 			state = 4;
 		}
 	}
@@ -192,9 +241,14 @@ task main(){
 		//Capture green
 		ReadPD();
 
-		if(PD_sum < 0){
-			//e
+		operateArm(12.7);
+		wait1Msec(3000);
+		operateArm(0);
 
+		if(PD_sum < 3000){
+			moveMotors(-127)
+			wait1Msec(1000);
+			stopMoving();
 			state = 5;
 		}
 	}
