@@ -129,47 +129,6 @@ void Move(){
 	motor[port10] = -tempSpeed; // left, port	 10
 }
 
-void moveMotors(int n)
-{
-	motor[rightMotor] = n;
-	motor[leftMotor] = n;
-}
-
-void stopMoving()
-{
-	motor[rightMotor] = 0;
-	motor[leftMotor]= 0;
-}
-
-void rightPointTurn(int n)
-{
-	motor[leftMotor] = n;
-	motor[rightMotor] = 0;
-}
-
-void leftPointTurn(int n)
-{
-	motor[leftMotor] = 0;
-	motor[rightMotor] = n;
-}
-
-void rightSwingTurn(int n)
-{
-	motor[leftMotor] = n;
-	motor[rightMotor] = -n;
-}
-
-void leftSwingTurn(int n)
-{
-	motor[leftMotor] = -n;
-	motor[rightMotor] = n;
-}
-
-void operateArm(int n)
-{
-	motor[armMotor] = n;
-}
-
 /*
 The GOBEACON main program essentially sets up all the configuration variables and repeatedly
 execute the three routines: Read_PD, find_max, and move.*/
@@ -187,7 +146,7 @@ task main(){
 
 	int state = 1;
 
-	while(state == 1){
+	while(true){
 		ReadPD();
 		Find_max();
 		Move();
@@ -195,8 +154,10 @@ task main(){
 		int lmtSwitch = SensorValue[limitSwitch];
 
 		if (lmtSwitch == true){
-			stopMoving();
-			state = 2;
+			motor[port1] = 0;
+			motor[port10] = 0;
+
+		state = 2;
 		}
 
 	}
@@ -205,16 +166,13 @@ task main(){
 		//Turn off red button
 		ReadPD();
 
-		operateArm(12.7);
+		motor[port3] = 12.7;
 		wait1Msec(3000);
-		operateArm(-12.7);
-		wait1Msec(3000);
-		operateArm(0);
+		motor[port3] = -12.7;
 
-		if(PD_sum < 3000){
-			moveMotors(-127)
-			wait1Msec(1000);
-			stopMoving();
+		if(PD_sum < 0){
+			//Back away from red beacon
+
 			state = 3;
 		}
 	}
