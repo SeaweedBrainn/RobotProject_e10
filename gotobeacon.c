@@ -146,7 +146,7 @@ void operateArm(int n){
 	motor[armMotor] = n;
 }
 
-void rotate(float time, int t)  //t = left or right, 1 is TURN right, 2 is TURN left{
+void rotate(float time, int t){  //t = left or right, 1 is TURN right, 2 is TURN left
 	switch (t){
 		case 1:
 			motor[rightMotor] = -127;		  // Motor on port2 is run at full (-127) power reverse
@@ -203,9 +203,9 @@ task main(){
 		//Turn off red button
 		ReadPD();
 
-		operateArm(12.7);
+		operateArm(127);
 		wait1Msec(3000);
-		operateArm(-12.7);
+		operateArm(-127);
 		wait1Msec(3000);
 		operateArm(0);
 
@@ -252,28 +252,26 @@ task main(){
 
 	while(state == 5){
 		//Exit arena
-		ReadPD();
-
+    moveMotors(127);
 		frontValue = SensorValue(frontSonar);
 		backValue = SensorValue(backSonar);
-		if (backValue < 5){
-				backUp(10000);
-				stopMoving();
-
-				if (rightValue < 12){ // turn LEFT
-				//	backUp(300);
-					rotate(1000, 2);
-				}
-				else if (rightValue > 12){ // turn RIGHT
-				//	backUp(300);
-					rotate(1000, 1);
-				}
-				else{
-					difference = 0;
-					frontValue = 0;
-					backValue = 0;
-				}
+		if (backValue > frontValue && frontValue < 10){
+				// backUp(1000);
+                        while(frontValue < backValue)
+                        {
+                            frontValue = SensorValue(frontSonar);
+                            backValue = SensorValue(backSonar);
+                            rotate(10, 2);
+                        }
+            }
+            else if (backValue < frontValue && backValue < 10){
+                         while(backValue < frontValue)
+                        {
+                            frontValue = SensorValue(frontSonar);
+                            backValue = SensorValue(backSonar);
+                            rotate(10, 2);
+                        }
 			}
 
-		}
+	}
 }
