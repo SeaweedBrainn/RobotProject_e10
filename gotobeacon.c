@@ -112,7 +112,7 @@ This function also calculates the speed, steering sensitivity and the heading di
 void Move(){
 	int tempSpeed = 0;
 	int error = 4 - max_no;//heading direction error , if PD4==max_no, then no error
-	int steer = -error * steer_sensitivity;//steering effort is proportioinal to heading error
+	int steer = error * steer_sensitivity;//steering effort is proportioinal to heading error
 	int speed = forward_speed;//forward speed (normal speed)
 
 	if(PD_sum < ambient_level){ // looking for the beacon if background noise is
@@ -149,13 +149,13 @@ void operateArm(int n){
 void rotate(float time, int t){  //t = left or right, 1 is TURN right, 2 is TURN left
 	switch (t){
 		case 1:
-		motor[rightMotor] = 100;	  // Motor on port2 is run at full (100 power reverse)
+			motor[rightMotor] = -127;	  // Motor on port2 is run at full (100 power reverse)
 			motor[leftMotor]  = 100;
 			delay(time);
 			break;
 		case 2:
 			motor[rightMotor] = 100;	  // Motor on port2 is run at full (100 power reverse)
-			motor[leftMotor]  = 100;
+			motor[leftMotor]  = -127;
 			delay(time);
 	}
 }
@@ -180,27 +180,10 @@ task main(){
 	slow_speed = 100;//slow speed , used in move
 	spin_speed = 75;//spin speed (for searching mode),used in move
 	SensorValue[digital10] = freq;// turn to 1KHz(red beacon)
-	int sonarFrontOff = 0;
-	int sonarBackOff = 0;
 	int difference;
 	int lmtSwitch;
 
-	SensorValue[backSonar] = sonarBackOff;
-	SensorValue[frontSonar] = sonarFrontOff;
-
 	int state = 1;
-
-	/*while(true) {
-    switch(state) {
-        case 1: case 2: case 3: case 4:
-            // Do NOT read sonar yet
-            break;
-        case 5:
-            sonarBackOff = SensorValue[backSonar]; // Only reads in state 5
-            sonarFrontOff = SensorValue[frontSonar];
-            break;/
-    }
-	}*/
 
 	while(state == 1){
 		ReadPD();
@@ -220,11 +203,11 @@ task main(){
 		//Turn off red button
 		operateArm(100);
 		delay(1500);
-		ReadPD();
-		delay(5);
 		operateArm(-50);
-		delay(1500);
+		delay(1000);
 		operateArm(0);
+		delay(5);
+		ReadPD();
 		delay(5);
 
 		if(PD_sum < 9000){
@@ -239,6 +222,7 @@ task main(){
 	delay(5);
 	SensorValue[digital10] = freq;// turn to 10KHz(green beacon)
 	delay(1000);
+	forward_speed = 75;
 
 	while(state == 3){
 		//Go to green
@@ -272,9 +256,6 @@ task main(){
 		}
 	}
 
-	sonarFrontOff = SensorValue[frontSonar];
-  sonarBackOff = SensorValue[backSonar];
-
 	while(state == 5){
 		//Exit arena
     moveMotors(127);
@@ -282,14 +263,14 @@ task main(){
 		frontValue = SensorValue[frontSonar];
 		backValue = SensorValue[backSonar];
 
-		if (backValue > frontValue && frontValue < 10){
+		if (backValue > 10 && frontValue < 10){
 			while(frontValue < backValue){
 				frontValue = SensorValue[frontSonar];
 				backValue = SensorValue[backSonar];
 				rotate(10, 2);
 			}
 		}
-		else if (backValue < frontValue && backValue < 10){
+		else if (backValue < 10 && frontValue > 10){
 			while(backValue < frontValue){
 				frontValue = SensorValue[frontSonar];
 				backValue = SensorValue[backSonar];
