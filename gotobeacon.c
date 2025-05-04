@@ -149,21 +149,15 @@ void operateArm(int n){
 void rotate(float time, int t){  //t = left or right, 1 is TURN right, 2 is TURN left
 	switch (t){
 		case 1:
-			motor[rightMotor] = -127;	  // Motor on port2 is run at full (100 power reverse)
-			motor[leftMotor]  = 100;
+			motor[rightMotor] = -110;	  // Motor on port2 is run at full (100 power reverse)
+			motor[leftMotor]  = 90;
 			delay(time);
 			break;
 		case 2:
-			motor[rightMotor] = 100;	  // Motor on port2 is run at full (100 power reverse)
-			motor[leftMotor]  = -127;
+			motor[rightMotor] = 90;	  // Motor on port2 is run at full (100 power reverse)
+			motor[leftMotor]  = -110;
 			delay(time);
 	}
-}
-
-void backUp(float time){
-	motor[rightMotor] = -100;
-	motor[leftMotor] = -100;
-	wait1Msec(time);
 }
 
 /*
@@ -175,12 +169,11 @@ task main(){
 	slow_level = 5000;// used in move
 	//stop_level = 6000;//used in move
 	expose_time = 5; // expose time was changed from 3ms to 5ms (3ms in easyC -> 5ms in RobotC)
-	steer_sensitivity = 30;//used in move
+	steer_sensitivity = 20;//used in move
 	forward_speed = 127;//forward speed , used in move
 	slow_speed = 100;//slow speed , used in move
-	spin_speed = 75;//spin speed (for searching mode),used in move
+	spin_speed = 50;//spin speed (for searching mode),used in move
 	SensorValue[digital10] = freq;// turn to 1KHz(red beacon)
-	int difference;
 	int lmtSwitch;
 
 	int state = 1;
@@ -201,17 +194,19 @@ task main(){
 
 	while(state == 2){
 		//Turn off red button
-		operateArm(100);
+		operateArm(127);
 		delay(1500);
-		operateArm(-50);
-		delay(1000);
+		operateArm(-75);
+		delay(750);
 		operateArm(0);
-		delay(5);
+		delay(100);
+
 		ReadPD();
 		delay(5);
 
 		if(PD_sum < 9000){
-			moveMotors(-100);
+			motor[rightMotor] = -75;
+			motor[leftMotor] = -100;
 			state = 3;
 		}
 	}
@@ -222,12 +217,12 @@ task main(){
 	delay(5);
 	SensorValue[digital10] = freq;// turn to 10KHz(green beacon)
 	delay(1000);
-	forward_speed = 75;
+	forward_speed = 100;
+	ambient_level = 130;
+	steer_sensitivity = 40;
 
 	while(state == 3){
 		//Go to green
-		ambient_level = 150;
-		steer_sensitivity = 20;
 		ReadPD();
 		Find_max();
 		Move();
@@ -242,39 +237,38 @@ task main(){
 
 	while(state == 4){
 		//Capture green
-		operateArm(50);
-		delay(1000);
+		operateArm(127);
+		delay(1500);
+		operateArm(0);
+		delay(100);
+
 		ReadPD();
 		delay(5);
 
-		if(PD_sum < ambient_level){
-			moveMotors(-100);
-			delay(1000);
-			stopMoving();
-			delay(5);
-			state = 5;
-		}
+		state = 5;
 	}
 
 	while(state == 5){
 		//Exit arena
-    moveMotors(127);
+		moveMotors(100);
 
 		frontValue = SensorValue[frontSonar];
 		backValue = SensorValue[backSonar];
 
-		if (backValue > 10 && frontValue < 10){
+		if (backValue > 5 && frontValue < 5){
 			while(frontValue < backValue){
 				frontValue = SensorValue[frontSonar];
 				backValue = SensorValue[backSonar];
-				rotate(10, 2);
+				rotate(1, 1);
+				moveMotors(100);
 			}
 		}
-		else if (backValue < 10 && frontValue > 10){
+		else if (backValue < 5 && frontValue > 5){
 			while(backValue < frontValue){
 				frontValue = SensorValue[frontSonar];
 				backValue = SensorValue[backSonar];
-				rotate(10, 2);
+				rotate(1, 1);
+				moveMotors(100);
 			}
 		}
 
